@@ -2,16 +2,16 @@ class Grdy < Formula
   desc "CLI tool to render JSON data as tables"
   homepage "https://github.com/chrismo/grdy"
   license "BSD-3-Clause"
-  version "0.4.0"
+  version "0.5.0"
 
   on_intel do
-    url "https://github.com/chrismo/grdy/releases/download/v0.4.0/grdy-v0.4.0-x86_64-apple-darwin.tar.gz"
-    sha256 "d725a72f5335736e29ab2507e526a115c2a49db98b152855728f14f614b8a02e"
+    url "https://github.com/chrismo/grdy/releases/download/v0.5.0/grdy-v0.5.0-x86_64-apple-darwin.tar.gz"
+    sha256 "7d3ff91302e8bef2f1bdfd5b0bc9f87a1ea9ecd08161bfb0d9ff432154ec4ba9"
   end
 
   on_arm do
-    url "https://github.com/chrismo/grdy/releases/download/v0.4.0/grdy-v0.4.0-aarch64-apple-darwin.tar.gz"
-    sha256 "c0a02bcba12d7d07c2d5b9f84fef11aafc30a124c589f04a0e682d66f8437760"
+    url "https://github.com/chrismo/grdy/releases/download/v0.5.0/grdy-v0.5.0-aarch64-apple-darwin.tar.gz"
+    sha256 "026ed2dfcf434f1f5e2216fbfb9ef77f83e050f8fc1327fc68a7d97d6da24b88"
   end
 
   def install
