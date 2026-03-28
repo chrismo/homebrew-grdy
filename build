@@ -75,10 +75,10 @@ update() {
 
 upgrade() {
   local new_version="$1"
-  echo "Snapshotting current formula..."
-  snapshot
   echo "Updating formula to ${new_version}..."
   update "$new_version"
+  echo "Snapshotting formula..."
+  snapshot
   echo "Done. Review changes with: git diff Formula/"
 }
 
