@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+FORMULA="Formula/grdy.rb"
+REPO="chrismo/grdy"
+
+current_version() {
+  grep -m1 'version "' "$FORMULA" | sed 's/.*version "//;s/".*//'
+}
+
+snapshot() {
+  local version
+  version=$(current_version)
+  local target="Formula/grdy@${version}.rb"
+
+  if [[ -f "$target" ]]; then
+    echo "  $target already exists, skipping snapshot."
+    return
+  fi
+
+  local class_suffix
+  class_suffix=$(echo "$version" | tr -d '.')
+  sed -e "s/^class Grdy < Formula/class GrdyAT${class_suffix} < Formula/" \
+      -e '/^  def install/i\
+  keg_only :versioned_formula\
+' \
+      "$FORMULA" > "$target"
+
+  echo "  Created $target"
+}
+
+fetch_sha() {
+  local url="$1"
+  curl -fSL "$url" 2>/dev/null | shasum -a 256 | awk '{print $1}'
+}
+
+update() {
+  local new_version="$1"
+  local old_version
+  old_version=$(current_version)
+
+  if [[ "$old_version" == "$new_version" ]]; then
+    echo "  Formula is already at $new_version, nothing to update."
+    return
+  fi
+
+  local base_url="https://github.com/${REPO}/releases/download/v${new_version}"
+  local intel_url="${base_url}/grdy-v${new_version}-x86_64-apple-darwin.tar.gz"
+  local arm_url="${base_url}/grdy-v${new_version}-aarch64-apple-darwin.tar.gz"
+
+  echo "  Fetching sha256 for intel..."
+  local intel_sha
+  intel_sha=$(fetch_sha "$intel_url")
+  echo "  Fetching sha256 for arm..."
+  local arm_sha
+  arm_sha=$(fetch_sha "$arm_url")
+
+  sed -i '' \
+    -e "s/version \"${old_version}\"/version \"${new_version}\"/" \
+    -e "s|download/v${old_version}/grdy-v${old_version}-x86_64|download/v${new_version}/grdy-v${new_version}-x86_64|" \
+    -e "s|download/v${old_version}/grdy-v${old_version}-aarch64|download/v${new_version}/grdy-v${new_version}-aarch64|" \
+    "$FORMULA"
+
+  # Replace sha256 values (intel first, then arm)
+  local old_intel_sha old_arm_sha
+  old_intel_sha=$(awk '/on_intel/,/end/' "$FORMULA" | grep sha256 | sed 's/.*sha256 "//;s/".*//')
+  old_arm_sha=$(awk '/on_arm/,/end/' "$FORMULA" | grep sha256 | sed 's/.*sha256 "//;s/".*//')
+  sed -i '' \
+    -e "s/${old_intel_sha}/${intel_sha}/" \
+    -e "s/${old_arm_sha}/${arm_sha}/" \
+    "$FORMULA"
+
+  echo "  Updated $FORMULA to $new_version"
+}
+
+upgrade() {
+  local new_version="$1"
+  echo "Snapshotting current formula..."
+  snapshot
+  echo "Updating formula to ${new_version}..."
+  update "$new_version"
+  echo "Done. Review changes with: git diff Formula/"
+}
+
+case "${1:-}" in
+  upgrade)
+    [[ -z "${2:-}" ]] && { echo "Usage: ./build upgrade <new-version>"; exit 1; }
+    upgrade "$2"
+    ;;
+  snapshot)
+    snapshot
+    ;;
+  update)
+    [[ -z "${2:-}" ]] && { echo "Usage: ./build update <new-version>"; exit 1; }
+    update "$2"
+    ;;
+  *)
+    echo "Usage: ./build <command> [args]"
+    echo ""
+    echo "Commands:"
+    echo "  upgrade <version>   Snapshot current formula, then update to new version"
+    echo "  snapshot            Snapshot current formula as a versioned formula"
+    echo "  update <version>    Update grdy.rb to a new version (fetch shas from GitHub)"
+    ;;
+esac
