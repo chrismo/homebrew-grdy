@@ -1,4 +1,4 @@
-class Grdy < Formula
+class GrdyAT070 < Formula
   desc "CLI tool to render JSON data as tables"
   homepage "https://github.com/chrismo/grdy"
   license "BSD-3-Clause"
@@ -13,6 +13,8 @@ class Grdy < Formula
     url "https://github.com/chrismo/grdy/releases/download/v0.7.0/grdy-v0.7.0-aarch64-apple-darwin.tar.gz"
     sha256 "165fd1fccaca006875ca612610f8b3c4c8e9717a8143ad8649fb28a3fc9472c7"
   end
+
+  keg_only :versioned_formula
 
   def install
     bin.install "grdy"
